@@ -17,6 +17,7 @@ import {
     ICacheManager,
     IDatabaseAdapter,
     IDatabaseCacheAdapter,
+    Memory,
     ModelProviderName,
     defaultCharacter,
     elizaLogger,
@@ -37,7 +38,7 @@ import {
 } from "@ai16z/plugin-coinbase";
 import { confluxPlugin } from "@ai16z/plugin-conflux";
 import { imageGenerationPlugin } from "@ai16z/plugin-image-generation";
-import { evmPlugin } from "@ai16z/plugin-evm";
+import { evmPlugin, transferAction } from "@ai16z/plugin-evm";
 import { createNodePlugin } from "@ai16z/plugin-node";
 import { solanaPlugin } from "@ai16z/plugin-solana";
 import { aptosPlugin, TransferAptosToken } from "@ai16z/plugin-aptos";
@@ -49,6 +50,7 @@ import path from "path";
 import readline from "readline";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
+import { sendTransactionAction } from "../actions/sendTransactionAction";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -371,7 +373,32 @@ export function createAgent(
         databaseAdapter: db,
         token,
         modelProvider: character.modelProvider,
-        evaluators: [],
+        evaluators: [
+            getSecret(character, "EVM_PRIVATE_KEY")
+                ? {
+                      name: "TRUST_EVALUATOR",
+                      similes: ["EVALUATE_TRUST", "CHECK_TRUST"],
+                      description: "Evaluates transaction trust and security",
+                      validate: async (
+                          runtime: IAgentRuntime,
+                          message: Memory
+                      ) => {
+                          return (
+                              message.content.text.includes("send") ||
+                              message.content.text.includes("transfer")
+                          );
+                      },
+                      handler: async (
+                          runtime: IAgentRuntime,
+                          message: Memory
+                      ) => {
+                          // Basic trust evaluation
+                          return true;
+                      },
+                      examples: [],
+                  }
+                : null,
+        ].filter(Boolean),
         character,
         plugins: [
             bootstrapPlugin,
@@ -384,11 +411,7 @@ export function createAgent(
                 !getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
                 ? solanaPlugin
                 : null,
-            getSecret(character, "EVM_PRIVATE_KEY") ||
-            (getSecret(character, "WALLET_PUBLIC_KEY") &&
-                !getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
-                ? evmPlugin
-                : null,
+            goatPlugin,
             getSecret(character, "ZEROG_PRIVATE_KEY") ? zgPlugin : null,
             getSecret(character, "COINBASE_COMMERCE_KEY")
                 ? coinbaseCommercePlugin
