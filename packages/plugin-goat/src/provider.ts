@@ -1,14 +1,13 @@
 import { createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { base } from "viem/chains";
+import { base, optimismSepolia } from "viem/chains";
 
 import { Memory, Provider, State, type IAgentRuntime } from "@ai16z/eliza";
 import { viem } from "@goat-sdk/wallet-viem";
 
-
 // Add the chain you want to use, remember to update also
 // the EVM_PROVIDER_URL to the correct one for the chain
-export const chain = base;
+export const chain = optimismSepolia;
 
 /**
  * Create a wallet client for the given runtime.
