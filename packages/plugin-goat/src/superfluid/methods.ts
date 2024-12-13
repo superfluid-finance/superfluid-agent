@@ -71,7 +71,7 @@ export async function getUnits(
         functionName: "getUnits",
         args: [parameters.memberAddr],
     });
-    return result.toString();
+    return result.value.toString();
 }
 
 export async function getMemberFlowRate(
@@ -84,7 +84,7 @@ export async function getMemberFlowRate(
         functionName: "getMemberFlowRate",
         args: [parameters.memberAddr],
     });
-    return result.toString();
+    return result.value.toString();
 }
 
 export async function getTotalFlowRate(
@@ -97,5 +97,5 @@ export async function getTotalFlowRate(
         functionName: "getTotalFlowRate",
         args: [],
     });
-    return result.toString();
+    return result.value.toString();
 }
