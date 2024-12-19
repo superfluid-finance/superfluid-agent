@@ -1,0 +1,4 @@
+Contract Type,Name,Symbol,Network,Contract Address,Transaction URL,Base URI,Total Supply
+
+ERC20,test,test,base-mainnet,0xD4485A12CAC39D47093d43a711AF8582B46EeFCB,https://basescan.org/tx/0xa1f900607a6b255b380856f6b7fdaa18f967e7cda6afa8898bdc027250659230,N/A,10000
+ERC20,super test,TESTx,base-mainnet,0x5f8fbF28962aaC7191F8ea4F3193Be344A018DFb,https://basescan.org/tx/0x6b95bd3614bbb3e4b548addb87d2492b88bb02907a8a60e27cd364063ee6c724,N/A,10000

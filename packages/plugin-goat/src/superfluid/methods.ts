@@ -1,6 +1,6 @@
 import type { EVMWalletClient } from "@goat-sdk/core";
 import type { z } from "zod";
-import { CFA_FORWARDER_ABI } from "./abi";
+import { CFA_FORWARDER_ABI, SUPER_TOKEN_FACTORY_ABI, POOL_ABI } from "./abi";
 import type {
     flowParametersSchema,
     getFlowrateParametersSchema,
@@ -8,9 +8,9 @@ import type {
     getUnitsParametersSchema,
     getMemberFlowRateParametersSchema,
     getTotalFlowRateParametersSchema,
+    deploySuperTokenWrapperParametersSchema,
 } from "./parameters";
 import { Abi } from "viem";
-import { POOL_ABI } from "./abi";
 
 export async function flow(
     walletClient: EVMWalletClient,
@@ -98,4 +98,23 @@ export async function getTotalFlowRate(
         args: [],
     });
     return result.value.toString();
+}
+
+export async function deploySuperTokenWrapper(
+    walletClient: EVMWalletClient,
+    parameters: z.infer<typeof deploySuperTokenWrapperParametersSchema>
+): Promise<string> {
+    const result = await walletClient.sendTransaction({
+        to: "0xe20B9a38E0c96F61d1bA6b42a61512D56Fea1Eb3",
+        abi: SUPER_TOKEN_FACTORY_ABI as Abi,
+        functionName: "createERC20Wrapper",
+        args: [
+            parameters.underlyingToken,
+            parameters.underlyingDecimals,
+            parameters.upgradability,
+            parameters.name,
+            parameters.symbol,
+        ],
+    });
+    return result.hash;
 }
