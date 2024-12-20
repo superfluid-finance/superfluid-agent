@@ -1,4 +1,3 @@
-
 import { Coinbase, readContract, SmartContract } from "@coinbase/coinbase-sdk";
 import {
     Action,
@@ -40,13 +39,13 @@ const contractsCsvFilePath = path.join(baseDir, "contracts.csv");
 
 // Add this helper at the top level
 const serializeBigInt = (value: any): any => {
-    if (typeof value === 'bigint') {
+    if (typeof value === "bigint") {
         return value.toString();
     }
     if (Array.isArray(value)) {
         return value.map(serializeBigInt);
     }
-    if (typeof value === 'object' && value !== null) {
+    if (typeof value === "object" && value !== null) {
         return Object.fromEntries(
             Object.entries(value).map(([k, v]) => [k, serializeBigInt(v)])
         );
@@ -156,34 +155,6 @@ export const deployTokenContractAction: Action = {
                         totalSupply,
                         baseURI: "N/A",
                     };
-                    await contract.wait();
-                    elizaLogger.log(
-                        "ERC20 Contract deployed successfully:",
-                        contract
-                    );
-                    const contractAddress = contract.getContractAddress();
-                    const createContractInvocationOptions: CreateContractInvocationOptions =
-                        {
-                            contractAddress:
-                                "0xe20B9a38E0c96F61d1bA6b42a61512D56Fea1Eb3",
-                            abi: SUPER_TOKEN_FACTORY_ABI,
-                            method: "createERC20Wrapper",
-                            args: [
-                                contractAddress,
-                                18,
-                                1,
-                                `Super ${name}`,
-                                `${symbol}x`,
-                            ],
-                        };
-                    const createSuperTokenWrapper = await wallet.invokeContract(
-                        createContractInvocationOptions
-                    );
-                    await createSuperTokenWrapper.wait();
-                    elizaLogger.log(
-                        "Super Token Wrapper deployed successfully:",
-                        createSuperTokenWrapper
-                    );
                     break;
 
                 case "erc721":
@@ -369,8 +340,14 @@ export const invokeContractAction: Action = {
                 return;
             }
 
-            const { contractAddress, method, args, amount, assetId, networkId } =
-                invocationDetails.object;
+            const {
+                contractAddress,
+                method,
+                args,
+                amount,
+                assetId,
+                networkId,
+            } = invocationDetails.object;
             const wallet = await initializeWallet(runtime, networkId);
 
             // Prepare invocation options
@@ -380,10 +357,10 @@ export const invokeContractAction: Action = {
                 abi: ABI,
                 args: {
                     ...args,
-                    amount: args.amount || amount // Ensure amount is passed in args
+                    amount: args.amount || amount, // Ensure amount is passed in args
                 },
                 networkId,
-                assetId
+                assetId,
             };
             elizaLogger.log("Invocation options:", invocationOptions);
             // Invoke the contract
@@ -474,15 +451,19 @@ Contract invocation has been logged to the CSV file.`,
 
 export const readContractAction: Action = {
     name: "READ_CONTRACT",
-    description: "Read data from a deployed smart contract using the Coinbase SDK",
+    description:
+        "Read data from a deployed smart contract using the Coinbase SDK",
     validate: async (runtime: IAgentRuntime, _message: Memory) => {
         elizaLogger.log("Validating runtime for READ_CONTRACT...");
-        return !!(
-            runtime.character.settings.secrets?.COINBASE_API_KEY ||
-            process.env.COINBASE_API_KEY
-        ) && !!(
-            runtime.character.settings.secrets?.COINBASE_PRIVATE_KEY ||
-            process.env.COINBASE_PRIVATE_KEY
+        return (
+            !!(
+                runtime.character.settings.secrets?.COINBASE_API_KEY ||
+                process.env.COINBASE_API_KEY
+            ) &&
+            !!(
+                runtime.character.settings.secrets?.COINBASE_PRIVATE_KEY ||
+                process.env.COINBASE_PRIVATE_KEY
+            )
         );
     },
     handler: async (
@@ -496,8 +477,12 @@ export const readContractAction: Action = {
 
         try {
             Coinbase.configure({
-                apiKeyName: runtime.getSetting("COINBASE_API_KEY") ?? process.env.COINBASE_API_KEY,
-                privateKey: runtime.getSetting("COINBASE_PRIVATE_KEY") ?? process.env.COINBASE_PRIVATE_KEY,
+                apiKeyName:
+                    runtime.getSetting("COINBASE_API_KEY") ??
+                    process.env.COINBASE_API_KEY,
+                privateKey:
+                    runtime.getSetting("COINBASE_PRIVATE_KEY") ??
+                    process.env.COINBASE_PRIVATE_KEY,
             });
 
             const context = composeContext({
@@ -522,8 +507,15 @@ export const readContractAction: Action = {
                 return;
             }
 
-            const { contractAddress, method, args, networkId, abi } = readDetails.object;
-            elizaLogger.log("Reading contract:", { contractAddress, method, args, networkId, abi });
+            const { contractAddress, method, args, networkId, abi } =
+                readDetails.object;
+            elizaLogger.log("Reading contract:", {
+                contractAddress,
+                method,
+                args,
+                networkId,
+                abi,
+            });
 
             const result = await readContract({
                 networkId,
@@ -538,19 +530,24 @@ export const readContractAction: Action = {
 
             elizaLogger.info("Contract read result:", serializedResult);
 
-            callback({
-                text: `Contract read successful:
+            callback(
+                {
+                    text: `Contract read successful:
 - Contract Address: ${contractAddress}
 - Method: ${method}
 - Network: ${networkId}
-- Result: ${JSON.stringify(serializedResult, null, 2)}`
-            }, []);
-
+- Result: ${JSON.stringify(serializedResult, null, 2)}`,
+                },
+                []
+            );
         } catch (error) {
             elizaLogger.error("Error reading contract:", error);
-            callback({
-                text: `Failed to read contract: ${error instanceof Error ? error.message : "Unknown error"}`
-            }, []);
+            callback(
+                {
+                    text: `Failed to read contract: ${error instanceof Error ? error.message : "Unknown error"}`,
+                },
+                []
+            );
         }
     },
     examples: [
@@ -578,6 +575,11 @@ export const readContractAction: Action = {
 
 export const tokenContractPlugin: Plugin = {
     name: "tokenContract",
-    description: "Enables deployment, invocation, and reading of ERC20, ERC721, and ERC1155 token contracts using the Coinbase SDK",
-    actions: [deployTokenContractAction, invokeContractAction, readContractAction],
+    description:
+        "Enables deployment, invocation, and reading of ERC20, ERC721, and ERC1155 token contracts using the Coinbase SDK",
+    actions: [
+        deployTokenContractAction,
+        invokeContractAction,
+        readContractAction,
+    ],
 };
