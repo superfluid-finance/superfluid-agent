@@ -1,4 +1,11 @@
-import { Coinbase, Trade, Transfer, Wallet, WalletData, Webhook } from "@coinbase/coinbase-sdk";
+import {
+    Coinbase,
+    Trade,
+    Transfer,
+    Wallet,
+    WalletData,
+    Webhook,
+} from "@coinbase/coinbase-sdk";
 import { elizaLogger, IAgentRuntime } from "@ai16z/eliza";
 import fs from "fs";
 import path from "path";
@@ -10,6 +17,7 @@ import { Transaction } from "./types";
 // Dynamically resolve the file path to the src/plugins directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, "../../../"); // Go up to project root
 const baseDir = path.resolve(__dirname, "../../plugin-coinbase/src/plugins");
 const tradeCsvFilePath = path.join(baseDir, "trades.csv");
 const transactionCsvFilePath = path.join(baseDir, "transactions.csv");
@@ -17,7 +25,7 @@ const webhookCsvFilePath = path.join(baseDir, "webhooks.csv");
 
 export async function initializeWallet(
     runtime: IAgentRuntime,
-    networkId: string = Coinbase.networks.EthereumMainnet
+    networkId: string = Coinbase.networks.BaseMainnet
 ) {
     let wallet: Wallet;
     const storedSeed =
@@ -35,7 +43,11 @@ export async function initializeWallet(
         const walletData: WalletData = wallet.export();
         const walletAddress = await wallet.getDefaultAddress();
         try {
-            const characterFilePath = `characters/${runtime.character.name.toLowerCase()}.character.json`;
+            const characterFilePath = path.join(
+                projectRoot,
+                "characters",
+                `${runtime.character.name.toLowerCase()}.character.json`
+            );
             const walletIDSave = await updateCharacterSecrets(
                 characterFilePath,
                 "COINBASE_GENERATED_WALLET_ID",
@@ -56,7 +68,10 @@ export async function initializeWallet(
                 // save it to gitignored file
                 wallet.saveSeed(seedFilePath);
             }
-            elizaLogger.log("Wallet created and stored new wallet:", walletAddress);
+            elizaLogger.log(
+                "Wallet created and stored new wallet:",
+                walletAddress
+            );
         } catch (error) {
             elizaLogger.error("Error updating character secrets:", error);
             throw error;
@@ -92,7 +107,13 @@ export async function initializeWallet(
  * @param {string} sourceAsset - The source asset to trade.
  * @param {string} targetAsset - The target asset to trade.
  */
-export async function executeTradeAndCharityTransfer(runtime: IAgentRuntime, network: string, amount: number, sourceAsset: string, targetAsset: string) {
+export async function executeTradeAndCharityTransfer(
+    runtime: IAgentRuntime,
+    network: string,
+    amount: number,
+    sourceAsset: string,
+    targetAsset: string
+) {
     const wallet = await initializeWallet(runtime, network);
 
     elizaLogger.log("Wallet initialized:", {
@@ -112,18 +133,25 @@ export async function executeTradeAndCharityTransfer(runtime: IAgentRuntime, net
 
     let transfer: Transfer;
     if (charityAddress && charityAmount > 0) {
-        transfer = await executeTransfer(wallet, charityAmount, assetIdLowercase, charityAddress);
+        transfer = await executeTransfer(
+            wallet,
+            charityAmount,
+            assetIdLowercase,
+            charityAddress
+        );
         elizaLogger.log("Charity Transfer successful:", {
             address: charityAddress,
             transactionUrl: transfer.getTransactionLink(),
         });
-        await appendTransactionsToCsv([{
-            address: charityAddress,
-            amount: charityAmount,
-            status: "Success",
-            errorCode: null,
-            transactionUrl: transfer.getTransactionLink(),
-        }]);
+        await appendTransactionsToCsv([
+            {
+                address: charityAddress,
+                amount: charityAmount,
+                status: "Success",
+                errorCode: null,
+                transactionUrl: transfer.getTransactionLink(),
+            },
+        ]);
     }
 
     const trade: Trade = await wallet.createTrade(tradeParams);
@@ -219,7 +247,7 @@ export async function appendWebhooksToCsv(webhooks: Webhook[]) {
             });
             await csvWriter.writeRecords([]); // Create an empty file with headers
             elizaLogger.log("New CSV file created with headers.");
-                    }
+        }
         const csvWriter = createArrayCsvWriter({
             path: webhookCsvFilePath,
             header: [
@@ -262,10 +290,7 @@ export async function updateCharacterSecrets(
     value: string
 ): Promise<boolean> {
     try {
-        const characterFilePath = path.resolve(
-            process.cwd(),
-            characterfilePath
-        );
+        const characterFilePath = characterfilePath;
 
         // Check if the character file exists
         if (!fs.existsSync(characterFilePath)) {
@@ -387,7 +412,13 @@ export async function getWalletDetails(
  * @param {string} sourceAsset - The source asset to transfer.
  * @param {string} targetAddress - The target address to transfer to.
  */
-export async function executeTransferAndCharityTransfer(wallet: Wallet, amount: number, sourceAsset: string, targetAddress: string, network: string) {
+export async function executeTransferAndCharityTransfer(
+    wallet: Wallet,
+    amount: number,
+    sourceAsset: string,
+    targetAddress: string,
+    network: string
+) {
     const charityAddress = getCharityAddress(network);
     const charityAmount = charityAddress ? amount * 0.01 : 0;
     const transferAmount = charityAddress ? amount - charityAmount : amount;
@@ -395,8 +426,16 @@ export async function executeTransferAndCharityTransfer(wallet: Wallet, amount: 
 
     let charityTransfer: Transfer;
     if (charityAddress && charityAmount > 0) {
-        charityTransfer = await executeTransfer(wallet, charityAmount, assetIdLowercase, charityAddress);
-        elizaLogger.log("Charity Transfer successful:", charityTransfer.toString());
+        charityTransfer = await executeTransfer(
+            wallet,
+            charityAmount,
+            assetIdLowercase,
+            charityAddress
+        );
+        elizaLogger.log(
+            "Charity Transfer successful:",
+            charityTransfer.toString()
+        );
     }
 
     const transferDetails = {
@@ -430,7 +469,7 @@ export async function executeTransferAndCharityTransfer(wallet: Wallet, amount: 
         transfer,
         charityTransfer,
         responseText,
-    }
+    };
 }
 
 /**
@@ -440,7 +479,12 @@ export async function executeTransferAndCharityTransfer(wallet: Wallet, amount: 
  * @param {string} sourceAsset - The source asset to transfer.
  * @param {string} targetAddress - The target address to transfer to.
  */
-export async function executeTransfer(wallet: Wallet, amount: number, sourceAsset: string, targetAddress: string) {
+export async function executeTransfer(
+    wallet: Wallet,
+    amount: number,
+    sourceAsset: string,
+    targetAddress: string
+) {
     const assetIdLowercase = sourceAsset.toLowerCase();
     const transferDetails = {
         amount,
@@ -454,8 +498,8 @@ export async function executeTransfer(wallet: Wallet, amount: number, sourceAsse
         transfer = await wallet.createTransfer(transferDetails);
         elizaLogger.log("Transfer initiated:", transfer.toString());
         await transfer.wait({
-        intervalSeconds: 1,
-        timeoutSeconds: 20,
+            intervalSeconds: 1,
+            timeoutSeconds: 20,
         });
     } catch (error) {
         elizaLogger.error("Error executing transfer:", error);

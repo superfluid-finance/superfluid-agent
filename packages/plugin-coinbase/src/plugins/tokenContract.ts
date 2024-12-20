@@ -1,3 +1,4 @@
+
 import { Coinbase, readContract, SmartContract } from "@coinbase/coinbase-sdk";
 import {
     Action,
@@ -155,6 +156,34 @@ export const deployTokenContractAction: Action = {
                         totalSupply,
                         baseURI: "N/A",
                     };
+                    await contract.wait();
+                    elizaLogger.log(
+                        "ERC20 Contract deployed successfully:",
+                        contract
+                    );
+                    const contractAddress = contract.getContractAddress();
+                    const createContractInvocationOptions: CreateContractInvocationOptions =
+                        {
+                            contractAddress:
+                                "0xe20B9a38E0c96F61d1bA6b42a61512D56Fea1Eb3",
+                            abi: SUPER_TOKEN_FACTORY_ABI,
+                            method: "createERC20Wrapper",
+                            args: [
+                                contractAddress,
+                                18,
+                                1,
+                                `Super ${name}`,
+                                `${symbol}x`,
+                            ],
+                        };
+                    const createSuperTokenWrapper = await wallet.invokeContract(
+                        createContractInvocationOptions
+                    );
+                    await createSuperTokenWrapper.wait();
+                    elizaLogger.log(
+                        "Super Token Wrapper deployed successfully:",
+                        createSuperTokenWrapper
+                    );
                     break;
 
                 case "erc721":

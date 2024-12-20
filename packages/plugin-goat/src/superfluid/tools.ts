@@ -5,6 +5,7 @@ import {
     getUnits,
     getMemberFlowRate,
     getTotalFlowRate,
+    deploySuperTokenWrapper,
 } from "./methods";
 import {
     flowParametersSchema,
@@ -13,6 +14,7 @@ import {
     getUnitsParametersSchema,
     getMemberFlowRateParametersSchema,
     getTotalFlowRateParametersSchema,
+    deploySuperTokenWrapperParametersSchema,
 } from "./parameters";
 import type { DeferredTool, EVMWalletClient } from "@goat-sdk/core";
 import type { z } from "zod";
@@ -79,13 +81,24 @@ export function getTools(): DeferredTool<EVMWalletClient>[] {
         ) => getTotalFlowRate(walletClient, parameters),
     };
 
+    const deploySuperTokenWrapperTool: DeferredTool<EVMWalletClient> = {
+        name: `deploy_super_token_wrapper`,
+        description: `This {{tool}} deploys a Super Token Wrapper for a given underlying token`,
+        parameters: deploySuperTokenWrapperParametersSchema,
+        method: (
+            walletClient: EVMWalletClient,
+            parameters: z.infer<typeof deploySuperTokenWrapperParametersSchema>
+        ) => deploySuperTokenWrapper(walletClient, parameters),
+    };
+
     tools.push(
         flowTool,
         getFlowrateTool,
         updateMemberUnitsTool,
         getUnitsTool,
         getMemberFlowRateTool,
-        getTotalFlowRateTool
+        getTotalFlowRateTool,
+        deploySuperTokenWrapperTool
     );
     return tools;
 }

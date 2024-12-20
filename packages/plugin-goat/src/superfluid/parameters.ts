@@ -41,3 +41,19 @@ export const getMemberFlowRateParametersSchema = z.object({
 export const getTotalFlowRateParametersSchema = z.object({
     poolAddress: z.string().describe("The address of the Pool contract"),
 });
+
+export const deploySuperTokenWrapperParametersSchema = z.object({
+    underlyingToken: z
+        .string()
+        .describe(
+            "The address of the contract to deploy the Super Token Wrapper for"
+        ),
+    underlyingDecimals: z
+        .number()
+        .describe("The decimals of the underlying token"),
+    upgradability: z
+        .enum(["0", "1", "2"])
+        .describe("The upgradability of the Super Token Wrapper"),
+    name: z.string().describe("The name of the Super Token Wrapper"),
+    symbol: z.string().describe("The symbol of the Super Token Wrapper"),
+});
